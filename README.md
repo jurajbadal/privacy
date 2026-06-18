@@ -1,0 +1,1 @@
+# weetwiz_privacy_policy
