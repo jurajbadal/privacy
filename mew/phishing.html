@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MEW — Phishing Audit Test</title>
+<style>
+  body { font-family: ui-monospace, monospace; background: #1e1e2e; color: #cdd6f4; padding: 32px; max-width: 900px; }
+  h1 { color: #f38ba8; margin-bottom: 8px; }
+  .subtitle { color: #6c7086; margin-bottom: 32px; font-size: 13px; line-height: 1.8; }
+  .section { margin-bottom: 48px; }
+  h2 { color: #a6adc8; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; border-bottom: 1px solid #313244; padding-bottom: 6px; }
+  .example { margin-bottom: 28px; }
+  .ex-label { color: #6c7086; font-size: 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .email-body {
+    background: #181825;
+    border: 1px solid #45475a;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #cdd6f4;
+    line-height: 1.7;
+  }
+  .email-body a { color: #89b4fa; }
+  .pattern-block {
+    background: #11111b;
+    border: 1px solid #313244;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #6c7086;
+    font-family: ui-monospace, monospace;
+    line-height: 1.6;
+  }
+  .pattern-block .ph { color: #a6adc8; }
+  .expected {
+    background: #181825;
+    border: 1px solid #313244;
+    border-left: 3px solid #313244;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .expected.impl { border-left-color: #40a040; }
+  .expected.plan { border-left-color: #7c5a9e; }
+  .ex-title { color: #6c7086; margin-bottom: 4px; }
+  .ex-danger { color: #f38ba8; }
+  .ex-warning { color: #fab387; }
+  .ex-critical { color: #ff6b6b; font-weight: bold; }
+  .ex-score { color: #6c7086; margin-top: 4px; }
+  .badge { border-radius: 3px; padding: 1px 5px; font-size: 10px; font-family: ui-monospace, monospace; }
+  .badge-impl { background: #1e3a1e; color: #a6e3a1; border: 1px solid #40a040; }
+  .badge-plan { background: #2a1e3a; color: #cba6f7; border: 1px solid #7c5a9e; }
+  kbd { background: #313244; border: 1px solid #45475a; border-radius: 4px; padding: 2px 6px; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<h1>MEW — Phishing Audit Test</h1>
+<div class="subtitle">
+  Hover links to trigger L1 signals. Arm Phishing Audit in popup first.<br>
+  <span style="color:#a6e3a1">■</span> <span class="badge badge-impl">implemented</span> — signal fires in current content.js &nbsp;·&nbsp;
+  <span style="color:#cba6f7">■</span> <span class="badge badge-plan">planned</span> — expected output when signal is added
+</div>
+
+<!-- ================================================================= -->
+<div class="section">
+  <h2>Cat 1 — URL Structure &nbsp;·&nbsp; zero false positives, implement first</h2>
+
+  <!-- 1.1 Display mismatch -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.1 — Display URL mismatch (redirect disguise)
+    </div>
+    <div class="email-body">
+      Please verify your account: <a href="https://iana.org">https://example.com</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> &lt;a href="https://iana.org"&gt;https://example.com&lt;/a&gt;<br>
+      Shown domain: <strong>example.com</strong> — Actual href domain: <strong>iana.org</strong><br>
+      Link text looks like a URL → only fires when text starts with https:// or www.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Display mismatch</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (20 pts)</div>
+    </div>
+  </div>
+
+  <!-- 1.2 IP address -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.2 — IP address as domain
+    </div>
+    <div class="email-body">
+      Your package is ready for pickup: <a href="http://185.234.219.100/track?id=PKG-8821">Track your shipment</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> href host = bare IPv4 (185.234.219.100)<br>
+      Regex: /^https?:\/\/\d{1,3}(\.\d{1,3}){3}/ — direct IP nearly always phishing or malware delivery
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ IP address domain</div>
+      <div class="ex-score">🎣 Phishing Risk: High (35 pts)</div>
+    </div>
+  </div>
+
+  <!-- 1.3 Credentials in URL -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.3 — Credentials embedded in URL
+    </div>
+    <div class="email-body">
+      Access your secure account portal: <a href="https://user:password123@secure-bank-login.com/account">Click here</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> href = https://user:pass@domain — userinfo component present<br>
+      new URL(href).username !== "" — browser ignores the prefix but it's a social-engineering lure
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Credentials in URL</div>
+      <div class="ex-score">🎣 Phishing Risk: High (35 pts)</div>
+    </div>
+  </div>
+
+  <!-- 1.4 javascript: URI -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.4 — javascript: URI (XSS vector)
+    </div>
+    <div class="email-body">
+      View your invoice online: <a href="javascript:void(document.cookie)">Open Invoice</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> href scheme = "javascript:" — executes JS in page context on click<br>
+      Hard-warn, not just score. Direct XSS vector — should never appear in email link.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Dangerous URI scheme</div>
+      <div class="ex-score">🎣 Phishing Risk: High (50 pts)</div>
+    </div>
+  </div>
+
+  <!-- 1.5 Multiple @ -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.5 — Multiple @ in URL (authority confusion)
+    </div>
+    <div class="email-body">
+      Secure login required for your account: <a href="https://secure.bankofamerica.com@evil-redirect.net/login">Log in to your account</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> https://legit.com@evil.com — browser resolves to evil.com, not legit.com<br>
+      Everything before @ is treated as credentials (ignored). Actual host = evil-redirect.net.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Credentials in URL</div>
+      <div class="ex-score">🎣 Phishing Risk: High (35 pts)</div>
+    </div>
+  </div>
+
+  <!-- 1.6 Port anomaly -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.6 — Non-standard port
+    </div>
+    <div class="email-body">
+      Update your Amazon payment method before it expires: <a href="https://amazon.com:8080/account/billing">Update now</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> brand domain + non-standard port (:8080)<br>
+      new URL(href).port → "8080". Legitimate Amazon never serves on port 8080.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Non-standard port (:8080)</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (15 pts)</div>
+    </div>
+  </div>
+
+  <!-- 1.7 Punycode -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.7 — Punycode / IDN homograph
+    </div>
+    <div class="email-body">
+      Your PayPal balance is on hold — action required: <a href="https://xn--pypal-4ve.com/resolve">Resolve now</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> xn-- prefix = punycode-encoded IDN domain<br>
+      xn--pypal-4ve.com renders as pаypal.com (Cyrillic 'а') — visually identical to paypal.com
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Punycode/IDN domain</div>
+      <div class="ex-score">🎣 Phishing Risk: High (30 pts)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<div class="section">
+  <h2>Cat 2 — Domain Shape &nbsp;·&nbsp; pure string analysis, no DNS</h2>
+
+  <!-- 2.1 Non-HTTPS -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      2.1 — Non-HTTPS (plain HTTP)
+    </div>
+    <div class="email-body">
+      Reset your password immediately: <a href="http://mybank-update.com/password-reset">Reset password</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> href scheme = "http://" — unencrypted connection<br>
+      Credentials transmitted in cleartext. No legitimate bank uses plain HTTP for auth.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Non-HTTPS</div>
+      <div class="ex-score">🎣 Phishing Risk: High (30 pts)</div>
+    </div>
+  </div>
+
+  <!-- 2.2 High-risk TLD -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      2.2 — High-risk TLD
+    </div>
+    <div class="email-body">
+      Your DHL package is waiting for collection: <a href="https://dhl-delivery-confirm.xyz/track">Track package</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> domain ends in .xyz (high-risk TLD)<br>
+      Heavily abused TLDs: .xyz .top .club .work .online .site .icu .tk .ml .ga .cf
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ High-risk TLD (.xyz)</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (25 pts)</div>
+    </div>
+  </div>
+
+  <!-- 2.3 Excessive hyphens -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      2.3 — Excessive hyphens in domain (keyword stuffing)
+    </div>
+    <div class="email-body">
+      Action required on your account: <a href="https://secure-paypal-account-verify-now.com/login">Verify account</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> domain base contains 4 hyphens (threshold: &gt;2)<br>
+      "secure-paypal-account-verify-now" — keyword stuffing to appear legitimate
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Excessive hyphens in domain (4)</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (15 pts)</div>
+    </div>
+  </div>
+
+  <!-- 2.4 Security keyword in domain -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      2.4 — Security keywords in domain name
+    </div>
+    <div class="email-body">
+      Your account needs attention: <a href="https://secure-verify-billing.net/account">View account</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> domain hostname (not path) contains "secure", "verify", "billing"<br>
+      Keywords: secure, verify, login, account, update, confirm, billing — in hostname string only
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Security keyword in domain: "secure"</div>
+      <div class="ex-warning">⚠️ Security keyword in domain: "verify"</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (15 pts)</div>
+    </div>
+  </div>
+
+  <!-- 2.5 Free subdomain hosting -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      2.5 — Free subdomain hosting
+    </div>
+    <div class="email-body">
+      Your PayPal invoice is ready to view: <a href="https://invoice-paypal-2024.weebly.com/view">Open invoice</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> domain ends in .weebly.com (free hosting platform subdomain)<br>
+      Free platforms: weebly.com, wordpress.com, github.io, netlify.app, pages.dev, wixsite.com
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Free hosting: weebly.com</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (15 pts)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<div class="section">
+  <h2>Cat 3 — Path &amp; Query &nbsp;·&nbsp; URL parsing only</h2>
+
+  <!-- 3.1 Dangerous extension -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      3.1 — Dangerous file extension in path
+    </div>
+    <div class="email-body">
+      Your Q4 invoice is attached — download to view: <a href="https://invoices-cdn.com/download/invoice_Q4_2024.exe">Download Invoice</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> URL path ends in .exe<br>
+      Dangerous extensions: .exe .zip .dmg .msi .bat .sh .js .vbs .scr .ps1
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Dangerous extension (.exe)</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (25 pts)</div>
+    </div>
+  </div>
+
+  <!-- 3.2 Open redirect -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      3.2 — Open redirect parameter
+    </div>
+    <div class="email-body">
+      Continue to your account: <a href="https://accounts.google.com/ServiceLogin?redirect=http://evil-harvest.com/steal">Sign in with Google</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> URL query contains ?redirect= pointing to external domain<br>
+      Trusted domain shown in URL bar, but redirect= sends user to attacker site after click.<br>
+      Redirect params: redirect, url, goto, next, return, out, target
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Open redirect param (?redirect=)</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (15 pts)</div>
+    </div>
+  </div>
+
+  <!-- 3.3 Suspicious keyword (implemented) -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      3.3 — Suspicious keyword in URL
+    </div>
+    <div class="email-body">
+      Your account has been locked: <a href="https://notmybank.com/verify-account?token=abc123">Unlock account</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> URL contains "verify" keyword (matched in full URL string)<br>
+      Suspicious URL keywords: verify, login, account, update, secure, confirm, password
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Suspicious keyword: "verify"</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (15 pts)</div>
+    </div>
+  </div>
+
+  <!-- 3.4 Heavy % encoding -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      3.4 — Excessive URL encoding (obfuscation)
+    </div>
+    <div class="email-body">
+      Confirm your identity: <a href="https://pa%79%70al%2Ecom.evil.net/%6C%6F%67%69%6E">Confirm now</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> domain and path contain heavy %xx percent-encoding<br>
+      Decodes to: paypal.com.evil.net/login — encoding hides the domain structure from quick inspection
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Heavy URL encoding (8 encoded chars)</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (15 pts)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<div class="section">
+  <h2>Cat 4 — DOM Context &nbsp;·&nbsp; reading the &lt;a&gt; element</h2>
+
+  <!-- 4.1 Hidden link -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      4.1 — Hidden / invisible link
+    </div>
+    <div class="email-body">
+      This email contains a hidden tracking link below (invisible to user):
+      <a href="https://tracker.phishing-co.com/pixel" style="display:none">hidden</a>
+      <br><em style="color:#6c7086;font-size:11px">(link is display:none — hover the line above to trigger if hoverable)</em>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> &lt;a&gt; has display:none, opacity:0, font-size:0, or zero-width content<br>
+      PA checks computed style on hover — fires even if element is not visible
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Hidden link</div>
+      <div class="ex-score">🎣 Phishing Risk: High (40 pts)</div>
+    </div>
+  </div>
+
+  <!-- 4.2 Image-only link -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      4.2 — Image-only link (destination hidden)
+    </div>
+    <div class="email-body">
+      <a href="https://phishing-login.com/fake-paypal"><img src="data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22200%22%20height%3D%2240%22%3E%3Crect%20width%3D%22200%22%20height%3D%2240%22%20fill%3D%22%230070ba%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2255%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%20font-family%3D%22Arial%22%20font-size%3D%2214%22%3ELog%20In%20to%20PayPal%3C%2Ftext%3E%3C%2Fsvg%3E" alt="Log In to PayPal" width="200" height="40"></a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> &lt;a href="..."&gt;&lt;img ...&gt;&lt;/a&gt; — no text children, only image<br>
+      User sees branded image. Destination URL hidden. Check: a.textContent.trim() === "" &amp;&amp; a.querySelector("img")
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Image-only link</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (15 pts)</div>
+    </div>
+  </div>
+
+  <!-- 4.3 Email address display → web URL -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      4.3 — Email address shown, web URL target
+    </div>
+    <div class="email-body">
+      Contact our support team: <a href="https://evil-credential-harvest.com/support">support@paypal.com</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> link text matches /\S+@\S+\.\S+/ (looks like email address)<br>
+      href is https:// (web URL) — user expects mailto: but gets taken to attacker page
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Email display → web URL</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (25 pts)</div>
+    </div>
+  </div>
+
+  <!-- 4.4 Scheme mismatch display -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      4.4 — Scheme mismatch: display says https, link is http
+    </div>
+    <div class="email-body">
+      Access our secure portal: <a href="http://not-secure-bank.com/portal">https://not-secure-bank.com/portal</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> display text starts with "https://" but href starts with "http://"<br>
+      Implies encryption (https in label) but actual connection is unencrypted
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Scheme mismatch</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (15 pts)</div>
+    </div>
+  </div>
+
+  <!-- 4.5 tel: callback phishing -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      4.5 — tel: scheme (callback phishing)
+    </div>
+    <div class="email-body">
+      Your account was charged $499.00. To dispute this charge: <a href="tel:+18005550199">Call our fraud line: +1-800-555-0199</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Pattern:</span> href scheme = "tel:" — triggers phone call on click<br>
+      Callback phishing: attacker answers and social-engineers victim over phone
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Callback phishing risk</div>
+      <div class="ex-score">🎣 Phishing Risk: Medium (15 pts)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<div class="section">
+  <h2>Cat 5 — Cross-Audit Verdict &nbsp;·&nbsp; PA + LA running together</h2>
+  <div class="subtitle" style="margin-bottom:20px">
+    Verdict strip appears at the bottom of every PA L1 bubble.<br>
+    Requires <strong>both</strong> Phishing Audit <strong>and</strong> Links Audit armed in popup.<br>
+    <span style="color:#6c7086">Trigger: PA score ≥ 10 (Medium+) and/or LA has danger/warning signals (excluding noise: No noopener, Domain, Risk summary)</span>
+  </div>
+
+  <!-- 5.1 Both detect suspicious — any signals, not just mismatch -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      5.1 — Both audits detect suspicious signals (e.g. fake shipping link)
+    </div>
+    <div class="email-body">
+      Your package is ready for pickup: <a href="http://track-fedex-delivery.xyz/claim?id=99281">Track your shipment</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">PA signals:</span> Non-HTTPS (+12), High-risk TLD .xyz (+6), Brand impersonation "fedex" (+8), keyword "claim" (+3) → score 29 → High<br>
+      <span class="ph">LA signals:</span> Non-HTTPS (+30), Brand impersonation (+8), Suspicious keyword (+15) → High<br>
+      Both systems independently suspicious — no display mismatch needed
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected at bottom of PA L1 bubble:</div>
+      <div class="ex-danger">⛔ Not recommended to click — both audits confirm</div>
+    </div>
+  </div>
+
+  <!-- 5.2 Both armed, both clean -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      5.2 — Both armed, no suspicious signals → clean verdict
+    </div>
+    <div class="email-body">
+      Visit our homepage: <a href="https://www.example.com">www.example.com</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Condition:</span> PA score &lt; 10 AND LA has no danger/warning (beyond noise)<br>
+      Two independent checks agree — positive confirmation
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected at bottom of PA L1 bubble:</div>
+      <div style="color:#a6e3a1">✅ No suspicious link detected — both audits agree</div>
+    </div>
+  </div>
+
+  <!-- 5.3 Only PA suspicious, LA clean -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      5.3 — PA suspicious, LA finds nothing → soft warning, run L2
+    </div>
+    <div class="email-body">
+      Access your files: <a href="https://drive.iana.org/files/report">https://drive.google.com</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Condition:</span> PA score ≥ 10 but LA has no meaningful danger/warning signals<br>
+      PA flagged something LA didn't catch — L2 analysis recommended
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected at bottom of PA L1 bubble:</div>
+      <div class="ex-warning">⚠️ Links Audit found no issue — run L2 for confirmation</div>
+    </div>
+  </div>
+
+  <!-- 5.4 Only LA suspicious, PA clean -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      5.4 — LA suspicious, PA finds nothing → soft warning from LA side
+    </div>
+    <div class="email-body">
+      Download report: <a href="http://internal-report.tk/Q4-2025.exe">Q4 Report</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Condition:</span> LA detects danger (Non-HTTPS, .tk TLD, .exe extension) but PA score &lt; 10<br>
+      LA caught something PA missed — still worth flagging
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected at bottom of PA L1 bubble:</div>
+      <div class="ex-warning">⚠️ Links Audit flagged issues — Phishing Audit found none — run L2</div>
+    </div>
+  </div>
+
+  <!-- 5.5 LA not armed, PA suspicious -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      5.5 — LA not armed, PA suspicious → prompt to enable Links Audit
+    </div>
+    <div class="email-body">
+      Reset your password: <a href="https://evil-phish.xyz/reset">https://mybank.com/reset</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Condition:</span> Only Phishing Audit is armed — Links Audit toggle is off<br>
+      PA sees mismatch + high-risk TLD but can't cross-confirm
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected at bottom of PA L1 bubble:</div>
+      <div style="color:#89b4fa">ℹ️ Enable Links Audit for independent confirmation</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================================================================= -->
+<div style="margin-top:32px; padding-top:16px; border-top:1px solid #313244; color:#6c7086; font-size:11px; line-height:1.8;">
+  Arm: open extension popup → Phishing Audit toggle.<br>
+  Cross-audit verdict (Cat 5): also arm Links Audit toggle.<br>
+  Dev server (L2 context): <kbd>make -C /Users/jurajbadal/MAIL_EXT start</kbd>
+</div>
+
+</body>
+</html>
