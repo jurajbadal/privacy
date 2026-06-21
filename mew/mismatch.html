@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MEW — Link Mismatch Test</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 60px auto; color: #333; }
+        h1 { font-size: 1.2rem; margin-bottom: 8px; }
+        p { color: #666; font-size: 0.9rem; margin-bottom: 32px; }
+        .link-row { margin-bottom: 24px; }
+        label { display: block; font-size: 0.8rem; color: #999; margin-bottom: 4px; }
+        a { font-size: 1rem; }
+    </style>
+</head>
+<body>
+    <h1>MEW Link Audit — Test Page</h1>
+    <p>Arm the extension, then hover/click the links below to trigger audit signals.<br>
+    <strong>Cross-audit verdict:</strong> arm both Links Audit <em>and</em> Phishing Audit to see combined verdict strip at bottom of PA bubble.</p>
+
+    <div class="link-row">
+        <label>display/href mismatch — shows www.example.com, goes to iana.org</label>
+        <a href="https://www.iana.org/help/example-domains">www.example.com</a>
+    </div>
+
+    <div class="link-row">
+        <label>clean link — label matches destination</label>
+        <a href="https://www.iana.org/help/example-domains">www.iana.org/help/example-domains</a>
+    </div>
+    <div class="link-row">
+        <label>clean link — label matches destination</label>
+        <a href="https://www.example.com">www.example.com</a>
+    </div>
+    <div class="link-row">
+        <label>clean link — label matches destination</label>
+        <a href="https://www.iana.org">www.iana.org</a>
+    </div>
+</body>
+</html>
