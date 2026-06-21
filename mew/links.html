@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MEW — Links Audit Test</title>
+<style>
+  body { font-family: ui-monospace, monospace; background: #1e1e2e; color: #cdd6f4; padding: 32px; max-width: 900px; }
+  h1 { color: #89b4fa; margin-bottom: 8px; }
+  .subtitle { color: #6c7086; margin-bottom: 32px; font-size: 13px; line-height: 1.8; }
+  .section { margin-bottom: 48px; }
+  h2 { color: #a6adc8; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; border-bottom: 1px solid #313244; padding-bottom: 6px; }
+  .example { margin-bottom: 28px; }
+  .ex-label { color: #6c7086; font-size: 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .email-body {
+    background: #181825;
+    border: 1px solid #45475a;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #cdd6f4;
+    line-height: 1.7;
+  }
+  .email-body a { color: #89b4fa; }
+  .pattern-block {
+    background: #11111b;
+    border: 1px solid #313244;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #6c7086;
+    font-family: ui-monospace, monospace;
+    line-height: 1.6;
+  }
+  .pattern-block .ph { color: #a6adc8; }
+  .expected {
+    background: #181825;
+    border: 1px solid #313244;
+    border-left: 3px solid #313244;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .expected.impl { border-left-color: #40a040; }
+  .expected.plan { border-left-color: #7c5a9e; }
+  .ex-title { color: #6c7086; margin-bottom: 4px; }
+  .ex-danger { color: #f38ba8; }
+  .ex-warning { color: #fab387; }
+  .ex-info { color: #89b4fa; }
+  .ex-clean { color: #a6e3a1; }
+  .score-high  { color: #ff6b6b; font-weight: bold; }
+  .score-med   { color: #fab387; }
+  .score-low   { color: #a6e3a1; }
+  .badge { border-radius: 3px; padding: 1px 5px; font-size: 10px; font-family: ui-monospace, monospace; }
+  .badge-impl { background: #1e3a1e; color: #a6e3a1; border: 1px solid #40a040; }
+  .badge-plan { background: #2a1e3a; color: #cba6f7; border: 1px solid #7c5a9e; }
+  kbd { background: #313244; border: 1px solid #45475a; border-radius: 4px; padding: 2px 6px; font-size: 11px; }
+  .scale-bar { display: flex; gap: 0; margin: 12px 0; border-radius: 4px; overflow: hidden; font-size: 10px; }
+  .scale-seg { padding: 4px 8px; text-align: center; flex: 1; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<h1>MEW — Links Audit Test</h1>
+<div class="subtitle">
+  Hover links to trigger L1 signals. Links Audit must be armed in popup.<br>
+  Click <strong>🔍 Audit server</strong> in the L1 panel to run L2 server analysis (dev server required).<br>
+  <span style="color:#a6e3a1">■</span> <span class="badge badge-impl">implemented</span> — detection fires in current build
+</div>
+
+<!-- ================================================================= -->
+<div class="section">
+  <h2>Scoring Reference — L1 risk scale</h2>
+  <div class="scale-bar">
+    <div class="scale-seg" style="background:#1a2e1a;color:#a6e3a1">Low<br>&lt;15</div>
+    <div class="scale-seg" style="background:#3a2e1e;color:#fab387">Medium<br>15–29</div>
+    <div class="scale-seg" style="background:#4a1010;color:#ff6b6b">High<br>≥30</div>
+  </div>
+  <div class="pattern-block">
+    <span class="ph">L1 weights (link signals, client-side, instant):</span><br>
+    Non-HTTPS: 30 &nbsp;·&nbsp; Display mismatch: 20 &nbsp;·&nbsp; Domain spoof: 10 &nbsp;·&nbsp; Hidden: 40 &nbsp;·&nbsp; High-risk TLD: 25<br>
+    Shortener: 10 &nbsp;·&nbsp; Keyword: 15 &nbsp;·&nbsp; Brand exact: 5 &nbsp;·&nbsp; Brand fuzzy: 8 &nbsp;·&nbsp; No noopener: 15<br>
+    Score = sum (no cap)<br><br>
+    <span class="ph">L2 weights (server headers, requires network call):</span><br>
+    Not HTTPS: 4 &nbsp;·&nbsp; No CSP: 3 &nbsp;·&nbsp; No X-Frame-Options: 3 &nbsp;·&nbsp; CORS *: 3 &nbsp;·&nbsp; No HSTS: 2<br>
+    No Permissions-Policy: 1 &nbsp;·&nbsp; No COEP: 1 &nbsp;·&nbsp; No COOP: 1 &nbsp;·&nbsp; No X-Content-Type: 1 &nbsp;·&nbsp; No Referrer-Policy: 1<br>
+    Score = Math.min(20, sum)
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<div class="section">
+  <h2>Cat 1 — Baseline · low and medium risk (L1)</h2>
+
+  <!-- 1.1 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.1 — Clean HTTPS + rel=noopener (no signals)
+    </div>
+    <div class="email-body">
+      Visit our website: <a href="https://www.apple.com" rel="noopener noreferrer">www.apple.com</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> none — HTTPS · rel set · no suspicious patterns<br>
+      Ideal link. Zero penalty.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-clean">✅ No signals detected</div>
+      <div><span class="score-low">Low (0 pts)</span></div>
+    </div>
+  </div>
+
+  <!-- 1.2 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.2 — HTTPS external, no rel=noopener
+    </div>
+    <div class="email-body">
+      Visit our website: <a href="https://www.apple.com">www.apple.com</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> No noopener (+15)<br>
+      Allows opener access. Low practical risk on its own.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ No noopener — external, unprotected</div>
+      <div><span class="score-med">Medium (15 pts)</span></div>
+    </div>
+  </div>
+
+  <!-- 1.3 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.3 — Plain HTTP external link
+    </div>
+    <div class="email-body">
+      Visit our site: <a href="http://lacnestavebniny.sk">lacnestavebniny.sk</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> Non-HTTPS (+30) · No noopener (+15) = 45<br>
+      Common for older sites. High score due to strong HTTP penalty.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Non-HTTPS — insecure protocol</div>
+      <div class="ex-warning">⚠️ No noopener — external, unprotected</div>
+      <div><span class="score-high">High (45 pts)</span></div>
+    </div>
+  </div>
+
+  <!-- 1.4 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.4 — URL shortener (HTTPS)
+    </div>
+    <div class="email-body">
+      Check our latest offer: <a href="https://bit.ly/mew-promo2024">See the offer</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> Shortener (+10) · No noopener (+15) = 25<br>
+      Destination hidden behind shortener. Medium risk without supporting signals.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ URL shortener — destination hidden</div>
+      <div class="ex-warning">⚠️ No noopener</div>
+      <div><span class="score-med">Medium (25 pts)</span></div>
+    </div>
+  </div>
+
+  <!-- 1.5 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.5 — Suspicious keyword in URL (clean domain)
+    </div>
+    <div class="email-body">
+      Please verify your email: <a href="https://myapp.com/verify-email">Verify email</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> Keyword "verify" (+15) · No noopener (+15) = 30<br>
+      Legitimate apps use /verify paths. Keyword alone triggers High.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Suspicious keyword: "verify"</div>
+      <div class="ex-warning">⚠️ No noopener</div>
+      <div><span class="score-high">High (30 pts)</span></div>
+    </div>
+  </div>
+
+  <!-- 1.6 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      1.6 — High-risk TLD, otherwise clean
+    </div>
+    <div class="email-body">
+      Read our blog: <a href="https://techblog.xyz">techblog.xyz</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> High-risk TLD .xyz (+25) · No noopener (+15) = 40<br>
+      .xyz used legitimately (e.g. alphabet.xyz). TLD penalty is strong.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ High-risk TLD (.xyz)</div>
+      <div class="ex-warning">⚠️ No noopener</div>
+      <div><span class="score-high">High (40 pts)</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<div class="section">
+  <h2>Cat 2 — High risk · signal combinations (L1)</h2>
+
+  <!-- 2.1 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      2.1 — HTTP + high-risk TLD + keyword
+    </div>
+    <div class="email-body">
+      Claim your reward now: <a href="http://win-rewards.xyz/claim">Claim here</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> Non-HTTPS (+30) · High-risk TLD .xyz (+25) · Keyword "claim" (+15) · No noopener (+15) = 85<br>
+      Three independent signals stack. HTTP + .xyz + action keyword = clear suspicious pattern.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Non-HTTPS — insecure protocol</div>
+      <div class="ex-warning">⚠️ High-risk TLD (.xyz)</div>
+      <div class="ex-warning">⚠️ Suspicious keyword: "claim"</div>
+      <div><span class="score-high">High (85 pts)</span></div>
+    </div>
+  </div>
+
+  <!-- 2.2 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      2.2 — Display text shows different domain (HTTPS, clean server)
+    </div>
+    <div class="email-body">
+      Your invoice is ready: <a href="https://iana.org/invoices">https://paypal.com/invoice</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> Display mismatch (+20) · No noopener (+15) = 35<br>
+      Text says paypal.com, href goes to iana.org. Classic redirect disguise.<br>
+      Fires when display text starts with https:// or www. and domain ≠ href domain.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Display mismatch — shown: paypal.com · actual: iana.org</div>
+      <div><span class="score-high">High (35 pts)</span></div>
+    </div>
+  </div>
+
+  <!-- 2.3 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      2.3 — Brand fuzzy + keyword + shortener
+    </div>
+    <div class="email-body">
+      Your PayPa1 account needs attention: <a href="https://bit.ly/payp-acc">Verify now</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> Brand fuzzy "paypa1" ≈ "paypal" in text (+8) · Keyword "verify" in text (+15) · Shortener (+10) · No noopener (+15) = 48<br>
+      Typosquat brand in display name. Shortener hides destination.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-warning">⚠️ Brand similarity: "PayPa1" ≈ "paypal"</div>
+      <div class="ex-warning">⚠️ Suspicious keyword: "verify"</div>
+      <div class="ex-warning">⚠️ URL shortener</div>
+      <div><span class="score-high">High (48 pts)</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<div class="section">
+  <h2>Cat 3 — High risk · strong deception (L1)</h2>
+
+  <!-- 3.1 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      3.1 — Display mismatch + HTTP
+    </div>
+    <div class="email-body">
+      Confirm your identity: <a href="http://evil-harvest.net/login">https://paypal.com/verify</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> Display mismatch (+20) · Non-HTTPS (+30) · No noopener (+15) = 65<br>
+      Shows trusted HTTPS URL in text, actual href is plain HTTP to a different domain.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Display mismatch — shown: paypal.com · actual: evil-harvest.net</div>
+      <div class="ex-danger">⛔ Non-HTTPS — insecure protocol</div>
+      <div><span class="score-high">High (65 pts)</span></div>
+    </div>
+  </div>
+
+  <!-- 3.2 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      3.2 — Domain spoof + brand exact + HTTP
+    </div>
+    <div class="email-body">
+      Your Amazon order is ready: <a href="http://amaz0n.com/order/confirm">Confirm now</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> Domain spoof "amaz0n" ≈ "amazon" (+10) · Brand exact (+5) · Non-HTTPS (+30) · No noopener (+15) = 60<br>
+      Levenshtein distance 1 (0→o). HTTP adds risk.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Domain spoof — amaz0n.com resembles amazon.com</div>
+      <div class="ex-danger">⛔ Brand detected: amazon</div>
+      <div class="ex-danger">⛔ Non-HTTPS</div>
+      <div><span class="score-high">High (60 pts)</span></div>
+    </div>
+  </div>
+
+  <!-- 3.3 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      3.3 — Display mismatch + domain spoof (HTTPS)
+    </div>
+    <div class="email-body">
+      Sign in to Google: <a href="https://g00gle.com/signin">https://google.com/signin</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> Display mismatch (+20) · Domain spoof "g00gle" ≈ "google" (+10) · No noopener (+15) = 45<br>
+      HTTPS makes it look safe. Both display text and destination domain are spoofed.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Display mismatch — shown: google.com · actual: g00gle.com</div>
+      <div class="ex-danger">⛔ Domain spoof — g00gle.com resembles google.com</div>
+      <div><span class="score-high">High (45 pts)</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<div class="section">
+  <h2>Cat 4 — High risk · worst case (L1)</h2>
+
+  <!-- 4.1 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      4.1 — Hidden link + display mismatch + HTTP
+    </div>
+    <div class="email-body">
+      Thanks for reading.
+      <a href="http://tracker.phish.net/beacon" style="display:none">https://paypal.com/track</a>
+      <em style="color:#6c7086;font-size:11px">(link is display:none)</em>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> Hidden (+40) · Display mismatch (+20) · Non-HTTPS (+30) · No noopener (+15) = 105<br>
+      Invisible link with mismatched domain on unencrypted connection. Tracking or session hijack.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover (if element reachable):</div>
+      <div class="ex-danger">⛔ Hidden link</div>
+      <div class="ex-danger">⛔ Display mismatch</div>
+      <div class="ex-danger">⛔ Non-HTTPS</div>
+      <div><span class="score-high">High (105 pts)</span></div>
+    </div>
+  </div>
+
+  <!-- 4.2 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      4.2 — All major signals firing
+    </div>
+    <div class="email-body">
+      <a href="http://paypa1.xyz/verify" style="font-size:0">https://paypal.com/verify</a>
+      <em style="color:#6c7086;font-size:11px">(font-size:0 — open DevTools to see)</em>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Signals:</span> Hidden (+40) · Display mismatch (+20) · Non-HTTPS (+30) · Domain spoof paypa1≈paypal (+10) · Brand exact (+5) · High-risk TLD .xyz (+25) · Keyword "verify" (+15) · No noopener (+15) = 160<br>
+      All major signals fire simultaneously. No cap — score reflects true accumulation.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L1 bubble on hover:</div>
+      <div class="ex-danger">⛔ Hidden link · Display mismatch · Non-HTTPS · Domain spoof · Brand · TLD · Keyword</div>
+      <div><span class="score-high">High (160 pts)</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<div class="section">
+  <h2>Cat 5 — L2 Safety Analysis · server header scores (dev server required)</h2>
+  <div class="subtitle" style="margin-bottom:16px">
+    Trigger: click <strong>🔍 Audit server</strong> in the link panel after hover.<br>
+    Scores reflect the server's response headers — L2 uses its own 0/20 scale (separate from L1).
+  </div>
+
+  <!-- 5.1 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      5.1 — Well-secured HTTPS server (all headers present)
+    </div>
+    <div class="email-body">
+      Visit: <a href="https://developer.mozilla.org">developer.mozilla.org</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Expected server profile:</span> HTTPS · CSP · X-Frame-Options · Referrer-Policy · HSTS · no CORS *<br>
+      Properly hardened. Near-zero penalty.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L2 Safety Analysis:</div>
+      <div class="ex-clean">Very Low (0–3/20)</div>
+    </div>
+  </div>
+
+  <!-- 5.2 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      5.2 — HTTPS server, several headers missing
+    </div>
+    <div class="email-body">
+      Visit: <a href="https://example.com">example.com</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Expected missing:</span> No CSP (+3) · No X-Frame (+3) · No COEP (+1) and others ~7–9<br>
+      Has HTTPS. Not fully hardened.
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L2 Safety Analysis:</div>
+      <div class="ex-warning">Medium (7–9/20)</div>
+    </div>
+  </div>
+
+  <!-- 5.3 reference case -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-impl">implemented</span>
+      5.3 — HTTP server, partial headers — reference case (lacnestavebniny.sk)
+    </div>
+    <div class="email-body">
+      Visit: <a href="http://lacnestavebniny.sk">lacnestavebniny.sk</a>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Known penalties:</span> Not HTTPS (+4) · No CSP (+3) · No X-Frame (+3) · CORS * (+3) · No COEP (+1) = 14<br>
+      ✅ Has: X-Content-Type-Options · Referrer-Policy · HSTS · SPF · DMARC<br>
+      ❌ Missing: HTTPS · CSP · X-Frame-Options<br>
+      ⚠️ Permissive: CORS * · server info exposed
+    </div>
+    <div class="expected impl">
+      <div class="ex-title">Expected L2 Safety Analysis:</div>
+      <div class="ex-danger">High (14/20)</div>
+      <div style="color:#6c7086;margin-top:4px">Confirmed 2026-06-03. This is the scoring reference case.</div>
+    </div>
+  </div>
+
+  <!-- 5.4 -->
+  <div class="example">
+    <div class="ex-label">
+      <span class="badge badge-plan">planned</span>
+      5.4 — HTTP, no security headers (theoretical worst case)
+    </div>
+    <div class="email-body">
+      <em style="color:#6c7086">Hypothetical server: HTTP + CORS * + no CSP, no X-Frame, no HSTS, no Referrer-Policy, no COOP, no COEP, no X-Content-Type</em>
+    </div>
+    <div class="pattern-block">
+      <span class="ph">Max theoretical:</span> Not HTTPS (+4) · No CSP (+3) · No X-Frame (+3) · CORS * (+3) · No Permissions (+1) · No COEP (+1) · No COOP (+1) · No X-Content-Type (+1) · No Referrer-Policy (+1) = 18<br>
+      Near-maximum server insecurity.
+    </div>
+    <div class="expected plan">
+      <div class="ex-title">Expected L2 Safety Analysis:</div>
+      <div class="ex-danger">Very High (18/20)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<div style="margin-top:32px; padding-top:16px; border-top:1px solid #313244; color:#6c7086; font-size:11px; line-height:1.8;">
+  Arm Links Audit: open extension popup → Links Audit toggle.<br>
+  Dev server (for L2): <kbd>make -C /Users/jurajbadal/MAIL_EXT start</kbd><br>
+  Reference case: lacnestavebniny.sk — L1: High (45 pts) · L2: High (14/20)
+</div>
+
+</body>
+</html>
