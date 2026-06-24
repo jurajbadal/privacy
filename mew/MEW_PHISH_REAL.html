@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MEW — Real Phishing Samples</title>
+<style>
+  body { font-family: ui-monospace, monospace; background: #1e1e2e; color: #cdd6f4; padding: 32px; }
+  h1 { color: #89b4fa; margin-bottom: 8px; }
+  .subtitle { color: #6c7086; margin-bottom: 32px; font-size: 13px; }
+  .section { margin-bottom: 40px; }
+  h2 { color: #a6adc8; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; border-bottom: 1px solid #313244; padding-bottom: 6px; }
+  .chip-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
+  .label { color: #6c7086; min-width: 220px; }
+  .chip {
+    display: inline-block;
+    background: #313244;
+    border: 1px solid #45475a;
+    border-radius: 20px;
+    padding: 4px 12px;
+    cursor: default;
+    color: #89b4fa;
+    font-size: 13px;
+    transition: background 0.15s;
+  }
+  .chip:hover { background: #45475a; }
+  .note { color: #6c7086; font-size: 11px; margin-top: 4px; }
+  .expected { background: #181825; border: 1px solid #313244; border-radius: 6px; padding: 8px 12px; margin-top: 6px; margin-left: 230px; font-size: 11px; line-height: 1.7; }
+  .expected .ex-title { color: #6c7086; margin-bottom: 4px; }
+  .ex-danger { color: #f38ba8; }
+  .ex-warning { color: #fab387; }
+  .ex-score { color: #6c7086; margin-top: 4px; }
+  .meta { background: #181825; border: 1px solid #313244; border-radius: 8px; padding: 14px 16px; font-size: 11px; line-height: 1.9; color: #6c7086; margin-top: 10px; }
+  .meta span { color: #cdd6f4; }
+  .img-block { margin-top: 10px; }
+  .img-block img { max-width: 340px; border: 1px solid #313244; border-radius: 8px; }
+  .source-tag { display: inline-block; background: #2a2a3d; border: 1px solid #45475a; border-radius: 4px; padding: 2px 8px; font-size: 10px; color: #6c7086; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<h1>MEW — Real Phishing Samples</h1>
+<div class="subtitle">Real .eml samples from phishing_pot honeypot. Hover chip to trigger mail_ext signals. Arm Email Audit in popup first.</div>
+
+<!-- ── SAMPLE 1 ── -->
+<div class="section">
+  <h2>Sample 1 — sample-1.eml</h2>
+  <div class="source-tag">phishing_pot · 2023-09-19 · PT-BR</div>
+
+  <div class="chip-row">
+    <span class="label">From (raw)</span>
+    <span class="chip" data-email="banco.bradesco@atendimento.com.br">banco.bradesco@atendimento.com.br</span>
+  </div>
+  <div class="expected">
+    <div class="ex-title">L1 — Hover (client-side):</div>
+    <div class="ex-danger">⛔ Display/domain mismatch: "BANCO DO BRADESCO LIVELO" → atendimento.com.br</div>
+    <div class="ex-score">📧 Sender Risk: Medium (+10 pts)</div>
+  </div>
+  <div class="expected" style="margin-top:6px">
+    <div class="ex-title">L2 — Click (DNS/RDAP · requires Wrangler dev):</div>
+    <div class="ex-warning">⚠️ DKIM: none — message not signed</div>
+    <div class="ex-warning">⚠️ DMARC: temperror — DNS timeout (SPF also temperror)</div>
+    <div class="ex-score">L2 Risk: Medium — auth records unreachable</div>
+  </div>
+
+  <div class="meta">
+    <div><b>Subject:</b> <span>CLIENTE PRIME - BRADESCO LIVELO: Seu cartão tem 92.990 pontos LIVELO expirando hoje!</span></div>
+    <div><b>Display name:</b> <span>BANCO DO BRADESCO LIVELO</span></div>
+    <div><b>Domain:</b> <span>atendimento.com.br</span> (generic "service" domain — not bradesco.com.br)</div>
+    <div><b>SPF:</b> <span>temperror</span> · <b>DKIM:</b> <span>none</span> · <b>DMARC:</b> <span>temperror (action=none)</span></div>
+    <div><b>Origin IP:</b> <span>137.184.34.4</span> (DigitalOcean VPS, SFO3)</div>
+  </div>
+</div>
+
+<!-- ── IMG SAMPLE ── -->
+<div class="section">
+  <h2>Image Sample — phishing_pot.png</h2>
+  <div class="source-tag">phishing_pot · repo logo</div>
+  <div class="note">Reference image from PHISHING_POT repo. Add real phishing screenshot images here as examples expand.</div>
+  <div class="img-block">
+    <img src="https://raw.githubusercontent.com/JURAJBADAL/PHISHING_POT/main/img/phishing_pot.png" alt="phishing_pot logo" />
+  </div>
+</div>
+
+</body>
+</html>
